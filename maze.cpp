@@ -2,6 +2,8 @@
 #include <vector>
 #include <tuple>
 #include <random> 
+#include <stack>
+#include <algorithm>
 
 using namespace std;
 
@@ -44,18 +46,31 @@ class Board {
     public:
         int size;
         std::vector < std::vector <Node>> maze; 
+        std::stack < std::tuple <int, int>> stacky;
+        std::vector <std::tuple <int, int>> path;
+        std::vector < std::vector <int>> board;
+
 
         // Constructor 
         Board(int Size) {
             size = Size;
 
-            // making the board
+            // making the maze
             for (int i=0;i<size;i++) {
                 std::vector <Node> row; // creating a row
                 for (int j=0;j<size;j++) {
                     row.push_back(Node(i,j, size));
                 }
                 maze.push_back(row);
+            }
+
+            // making the printable board
+            for (int i=0;i<size*2;i++) {
+                std::vector <int> row; // creating a row
+                for (int j=0;j<size*2;j++) {
+                    row.push_back(0);
+                }
+                board.push_back(row);
             }
 
             // making the borders
@@ -74,93 +89,81 @@ class Board {
             }
         }
 
-
-        // printing the board
         void printBoard() {
-            for(int i=0;i<size;i++) {
-                for(int j=0;j<size;j++) {
-                    if (maze[i][j].value == 1
-                    ){ 
-                        std::cout << "# ";
-                    }
-                    else {
-                        std::cout << ". ";
-                    }
+        for (int i = 0; i < size * 2 - 1; i++) {
+            for (int j = 0; j < size * 2 - 1; j++) {
+                if (board[i][j] == 1) {
+                    std::cout << "# ";
+                } else {
+                    std::cout << ". ";
                 }
-                std::cout << '\n';
+            }
+            std::cout << '\n';
             }
         }
+
+        void markPath() {
+            for (size_t i = 0; i < path.size() - 1; ++i) {
+                int y1 = get<0>(path[i]);
+                int x1 = get<1>(path[i]);
+                int y2 = get<0>(path[i + 1]);
+                int x2 = get<1>(path[i + 1]);
+
+                board[y1 * 2][x1 * 2] = 1;
+                board[y2 * 2][x2 * 2] = 1;
+
+                if (x1 == x2) {
+                    board[y1 * 2 + (y2 - y1)][x1 * 2] = 1;
+                } else if (y1 == y2) {
+                    board[y1 * 2][x1 * 2 + (x2 - x1)] = 1;
+                }
+        }
+    }
 
         void generateBoard() {
-            // lets start from the first cell
-            int nextX = 0;
-            int nextY = 0;
-            std::vector <std::tuple < int, int>> path;
-            maze[nextY][nextX].visited = true;
-            
-
-            while (nextX != -1) {
-
-                std::tuple <int, int> next = nextCell(maze[nextY][nextX]);
-
-                nextX = get<1>(next);
-                nextY = get<0>(next);
-
-                path.push_back(std::make_tuple(nextY, nextX));
-            }
-
-
-            for(int i =0; i<path.size(); i++) {
-                std::cout << get<0>(path[i]) << " " << get<1>(path[i]) << endl;
-            }
+            // Starts the dfs from top
+            dfs_iter(0,0);
 
         }
 
-        std::tuple<int, int> nextCell (Node node) {
-            std::vector<std::tuple <int, int> > neighbors = node.getNeighbors();
+        void dfs_iter (int startY, int startX) {
+            stacky.push(make_tuple(startY, startX));
+            
+            while (!stacky.empty()) {
+                int y = get<0>(stacky.top());
+                int x = get<1>(stacky.top());
+                stacky.pop();
 
-            bool flag = true;
-            int randomIndex;
-            while (flag) {
-                if (neighbors.size() != 0){
-                    randomIndex = getRandom(neighbors.size());
+                if (!maze[y][x].visited) {
+                    // std:: cout << y<< " " <<x << endl;
+                    path.push_back(make_tuple(y,x));
+                    maze[y][x].visited = true;
+                    maze[y][x].value = 1;
 
-                    int neighborX = get<1>(neighbors[randomIndex]);
-                    int neighborY = get<0>(neighbors[randomIndex]);
+                    // printBoard();
+                    // std::cout << "------------------" << endl;
 
-                    if (maze[neighborY][neighborX].visited == false){
-                        flag = false;
-                        maze[neighborY][neighborX].visited = true;
-                        maze[neighborY][neighborX].value = 1;
-                        std::cout << "Next Cell: " << neighborY << " " << neighborX << endl;
-                        printBoard();
-                        return std::make_tuple(neighborY, neighborX);
-                    }
-                    else { // visited cell, remove from neighbors 
-                        neighbors.erase(neighbors.begin() + randomIndex);
+                    // adding neigbors to the stack
+                    std::random_device rd; // getting random seed from the os
+                    std::mt19937 g(rd()); // using mersenne twister as the random number engine
+
+                    vector <tuple <int, int>> neighbors = maze[y][x].getNeighbors();
+                    std::shuffle(neighbors.begin(), neighbors.end(), g);
+
+                    for (const auto& neighbor: neighbors) {
+                        int neighborY = get<0>(neighbor);
+                        int neighborX = get<1>(neighbor);
+
+                        if(!maze[neighborY][neighborX].visited) {
+                            stacky.push(make_tuple(neighborY, neighborX));
+                        }
                     }
                 }
-                else {
-                    flag = false;
-                    return std::make_tuple(-1,-1); // no empty neighbors
-                }
+
             }
-            
-            return std::make_tuple(-1,-1); // no ensure a return statement
-
+            markPath();
         }
-
-        int getRandom(int max) {
-            // get a random number
-            std::random_device rd; // getting random seed from the os
-            std::mt19937 gen(rd()); // using mersenne twister as the random number engine
-
-            // defining a distribution
-            std::uniform_int_distribution<> dist(0, max-1);
-            int rand = dist(gen);
-
-            return rand;
-        }
+        
 };
 
 int main () {
