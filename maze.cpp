@@ -4,8 +4,6 @@
 
 using namespace std;
 
-// what functions should each node have? 
-
 class Node {
    public:
         bool visited = false;
@@ -39,43 +37,62 @@ class Node {
         }
 };
 
+class Board {
+    public:
+        int size;
+        std::vector < std::vector <Node>> maze; 
+
+        // Constructor 
+        Board(int Size) {
+            size = Size;
+
+            // making the board
+            for (int i=0;i<size;i++) {
+                std::vector <Node> row; // creating a row
+                for (int j=0;j<size;j++) {
+                    row.push_back(Node(i,j));
+                }
+                maze.push_back(row);
+            }
+
+            // making the borders
+            makeBorders();
+
+        }
+
+        void makeBorders() {
+            for(int i=0;i<size;i++) {
+                for(int j=0;j<size;j++) {
+                    if(i == 0 || j == 0 || i == size-1 || j == size -1) {
+                        maze[i][j].value = 1;
+                    }
+                }
+            }
+        }
+
+
+        // printing the board
+        void printBoard() {
+            for(int i=0;i<size;i++) {
+                for(int j=0;j<size;j++) {
+                    if (maze[i][j].value == 1
+                    ){ 
+                        std::cout << "# ";
+                    }
+                    else {
+                        std::cout << "  ";
+                    }
+                }
+                std::cout << '\n';
+            }
+        }
+};
+
 int main () {
 
-    // using a vector
-    int size = 6;
-    std::vector<std::vector<Node> > maze;
+    Board board(15);
+    board.printBoard();
 
-    for (int i=0;i<size;i++) {
-        std::vector <Node> row; // creating a row
-        for (int j=0;j<size;j++) {
-            row.push_back(Node(i,j));
-        }
-        maze.push_back(row);
-    }
-
-
-    // Making borders for the maze
-    for(int i=0;i<size;i++) {
-        for(int j=0;j<size;j++) {
-            if(i == 0 || j == 0 || i == size-1 || j == size -1) {
-                maze[i][j].value = 1;
-            }
-        }
-    }
-
-    // Printing the maze
-    for(int i=0;i<size;i++) {
-        for(int j=0;j<size;j++) {
-            if (maze[i][j].value == 1
-            ){ 
-                std::cout << "# ";
-            }
-            else {
-                std::cout << "  ";
-            }
-        }
-        std::cout << '\n';
-    }
 
     return 0;
 }
