@@ -3,7 +3,6 @@
 #include <tuple>
 #include <random> 
 #include <stack>
-#include <algorithm>
 
 using namespace std;
 
@@ -140,9 +139,6 @@ class Board {
                     maze[y][x].visited = true;
                     maze[y][x].value = 1;
 
-                    // printBoard();
-                    // std::cout << "------------------" << endl;
-
                     // adding neigbors to the stack
                     std::random_device rd; // getting random seed from the os
                     std::mt19937 g(rd()); // using mersenne twister as the random number engine
@@ -168,7 +164,7 @@ class Board {
 
 int main () {
 
-    Board board(10);
+    Board board(15);
     board.generateBoard();
     board.printBoard();
 
